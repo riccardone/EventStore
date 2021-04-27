@@ -5,11 +5,12 @@ using EventStore.Core.TransactionLog.LogRecords;
 using NUnit.Framework;
 
 namespace EventStore.Core.Tests.Services.Storage.Scavenge {
-	[TestFixture]
+	[TestFixture(typeof(LogFormat.V2), typeof(string))]
+	[TestFixture(typeof(LogFormat.V3), typeof(long))]
 	public class
-		when_deleting_single_stream_spanning_through_2_chunks_in_2nd_chunk_in_db_with_3_chunks : ReadIndexTestScenario {
+		when_deleting_single_stream_spanning_through_2_chunks_in_2nd_chunk_in_db_with_3_chunks<TLogFormat, TStreamId> : ReadIndexTestScenario<TLogFormat, TStreamId> {
 		private EventRecord _event7;
-		private IPrepareLogRecord<string> _event7prepare;
+		private IPrepareLogRecord<TStreamId> _event7prepare;
 		private CommitLogRecord _event7commit;
 
 		private EventRecord _event9;
@@ -24,7 +25,7 @@ namespace EventStore.Core.Tests.Services.Storage.Scavenge {
 
 			_event7prepare = WriteDeletePrepare("ES");
 			_event7commit = WriteDeleteCommit(_event7prepare);
-			_event7 = new EventRecord(EventNumber.DeletedStream, _event7prepare);
+			_event7 = new EventRecord(EventNumber.DeletedStream, _event7prepare, "ES");
 
 			_event9 = WriteSingleEvent("ES2", 0, new string('.', 5000), retryOnFail: true); //chunk 3
 

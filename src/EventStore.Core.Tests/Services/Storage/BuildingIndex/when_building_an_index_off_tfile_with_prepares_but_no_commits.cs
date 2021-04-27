@@ -5,8 +5,9 @@ using EventStore.Core.TransactionLog.LogRecords;
 using NUnit.Framework;
 
 namespace EventStore.Core.Tests.Services.Storage.BuildingIndex {
-	[TestFixture]
-	public class when_building_an_index_off_tfile_with_prepares_but_no_commits : ReadIndexTestScenario {
+	[TestFixture(typeof(LogFormat.V2), typeof(string))]
+	[TestFixture(typeof(LogFormat.V3), typeof(long))]
+	public class when_building_an_index_off_tfile_with_prepares_but_no_commits<TLogFormat, TStreamId> : ReadIndexTestScenario<TLogFormat, TStreamId> {
 		protected override void WriteTestScenario() {
 			long p1;
 			Writer.Write(new PrepareLogRecord(0, Guid.NewGuid(), Guid.NewGuid(), 0, 0, "test1", -1, DateTime.UtcNow,

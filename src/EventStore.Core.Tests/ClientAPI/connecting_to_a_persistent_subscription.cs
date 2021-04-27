@@ -649,10 +649,12 @@ namespace EventStore.Core.Tests.ClientAPI {
 		}
 	}
 
-	[TestFixture, Category("LongRunning")]
+	[TestFixture(typeof(LogFormat.V2), typeof(string))]
+	[TestFixture(typeof(LogFormat.V3), typeof(long))]
+	[Category("LongRunning")]
 	public class
-		connect_to_persistent_subscription_with_link_to_event_with_event_number_greater_than_int_maxvalue :
-			ExpectedVersion64Bit.MiniNodeWithExistingRecords {
+		connect_to_persistent_subscription_with_link_to_event_with_event_number_greater_than_int_maxvalue<TLogFormat, TStreamId> :
+			ExpectedVersion64Bit.MiniNodeWithExistingRecords<TLogFormat, TStreamId> {
 		private const string StreamName =
 			"connect_to_persistent_subscription_with_link_to_event_with_event_number_greater_than_int_maxvalue";
 

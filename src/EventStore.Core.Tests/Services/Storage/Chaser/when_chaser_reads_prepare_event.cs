@@ -3,8 +3,9 @@ using EventStore.Core.TransactionLog.LogRecords;
 using NUnit.Framework;
 
 namespace EventStore.Core.Tests.Services.Storage.Chaser {
-	[TestFixture]
-	public class when_chaser_reads_prepare_event : with_storage_chaser_service {
+	[TestFixture(typeof(LogFormat.V2), typeof(string))]
+	[TestFixture(typeof(LogFormat.V3), typeof(long))]
+	public class when_chaser_reads_prepare_event<TLogFormat, TStreamId> : with_storage_chaser_service<TLogFormat, TStreamId> {
 		private Guid _eventId;
 		private Guid _transactionId;
 

@@ -19,10 +19,6 @@ using EventStore.Core.TransactionLog.LogRecords;
 using System.Threading;
 
 namespace EventStore.Core.Tests.Services.Storage {
-	public sealed class when_having_an_epoch_manager_and_empty_tf_log_v3 : when_having_an_epoch_manager_and_empty_tf_log {
-		protected override IRecordFactory RecordFactory => LogFormatAbstractor.V3.RecordFactory;
-	}
-
 	[TestFixture]
 	public class when_having_an_epoch_manager_and_empty_tf_log : SpecificationWithDirectoryPerTestFixture, IDisposable {
 		private TFChunkDb _db;

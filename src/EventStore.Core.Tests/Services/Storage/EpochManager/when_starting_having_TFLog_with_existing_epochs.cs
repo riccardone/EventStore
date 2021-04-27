@@ -17,10 +17,12 @@ using EventStore.Core.Services.Storage.EpochManager;
 using EventStore.Core.Tests.Helpers;
 using EventStore.Core.TransactionLog.LogRecords;
 using System.Threading;
+using EventStore.Core.LogAbstraction;
 
 namespace EventStore.Core.Tests.Services.Storage {
-	[TestFixture]
-	public sealed class when_starting_having_TFLog_with_existing_epochs : SpecificationWithDirectoryPerTestFixture, IDisposable {
+	[TestFixture(typeof(LogFormat.V2), typeof(string))]
+	[TestFixture(typeof(LogFormat.V3), typeof(long))]
+	public sealed class when_starting_having_TFLog_with_existing_epochs<TLogFormat, TStreamId> : SpecificationWithDirectoryPerTestFixture, IDisposable {
 		private TFChunkDb _db;
 		private EpochManager _epochManager;
 		private LinkedList<EpochRecord> _cache;
@@ -30,10 +32,16 @@ namespace EventStore.Core.Tests.Services.Storage {
 		private readonly Guid _instanceId = Guid.NewGuid();
 		private readonly List<Message> _published = new List<Message>();
 		private List<EpochRecord> _epochs;
+		private LogFormatAbstractor<TStreamId> _logFormat;
+
 		private static int GetNextEpoch() {
 			return (int)Interlocked.Increment(ref _currentEpoch);
 		}
 		private static long _currentEpoch = -1;
+
+		public when_starting_having_TFLog_with_existing_epochs() {
+			_logFormat = LogFormatHelper<TLogFormat, TStreamId>.LogFormat;
+		}
 		private EpochManager GetManager() {
 			return new EpochManager(_mainBus,
 				10,
@@ -43,7 +51,7 @@ namespace EventStore.Core.Tests.Services.Storage {
 				maxReaderCount: 5,
 				readerFactory: () => new TFChunkReader(_db, _db.Config.WriterCheckpoint,
 					optimizeReadSideCache: _db.Config.OptimizeReadSideCache),
-				new LogV2RecordFactory(),
+				_logFormat.RecordFactory,
 				_instanceId);
 		}
 		private LinkedList<EpochRecord> GetCache(EpochManager manager) {
@@ -107,7 +115,7 @@ namespace EventStore.Core.Tests.Services.Storage {
 				maxReaderCount: 5,
 				readerFactory: () => new TFChunkReader(_db, _db.Config.WriterCheckpoint,
 					optimizeReadSideCache: _db.Config.OptimizeReadSideCache),
-				new LogV2RecordFactory(),
+				_logFormat.RecordFactory,
 				_instanceId);
 			_epochManager.Init();
 			_cache = GetCache(_epochManager);

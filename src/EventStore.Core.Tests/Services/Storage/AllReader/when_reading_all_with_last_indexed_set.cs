@@ -3,9 +3,9 @@ using NUnit.Framework;
 using EventStore.Core.Data;
 
 namespace EventStore.Core.Tests.Services.Storage.AllReader {
-	[TestFixture]
-	public class when_reading_all
-		: ReadIndexTestScenario {
+	[TestFixture(typeof(LogFormat.V2), typeof(string))]
+	[TestFixture(typeof(LogFormat.V3), typeof(long))]
+	public class when_reading_all<TLogFormat, TStreamId> : ReadIndexTestScenario<TLogFormat, TStreamId> {
 		long _commitPosition;
 
 		protected override void WriteTestScenario() {

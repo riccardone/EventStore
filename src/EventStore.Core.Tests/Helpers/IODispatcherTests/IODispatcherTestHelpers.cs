@@ -14,7 +14,7 @@ namespace EventStore.Core.Tests.Helpers.IODispatcherTests {
 			var recordFactory = LogFormatAbstractor.V2.RecordFactory;
 			var record = new EventRecord(eventNumber, LogRecord.Prepare(recordFactory, 0, Guid.NewGuid(), Guid.NewGuid(), 0, 0,
 				streamId, eventNumber, PrepareFlags.None, eventType, Encoding.UTF8.GetBytes(data),
-				Encoding.UTF8.GetBytes(metadata)));
+				Encoding.UTF8.GetBytes(metadata)), streamId);
 			return new ResolvedEvent[] {
 				ResolvedEvent.ForUnresolvedEvent(record, 0)
 			};

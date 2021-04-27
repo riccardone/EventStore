@@ -20,10 +20,7 @@ using System.IO;
 using System.Threading.Tasks;
 
 namespace EventStore.Core.Tests.ClientAPI.ExpectedVersion64Bit {
-	public abstract class MiniNodeWithExistingRecords : MiniNodeWithExistingRecords<string> {
-	}
-
-	public abstract class MiniNodeWithExistingRecords<TStreamId> : SpecificationWithDirectoryPerTestFixture {
+	public abstract class MiniNodeWithExistingRecords<TLogFormat, TStreamId> : SpecificationWithDirectoryPerTestFixture {
 		private readonly TcpType _tcpType = TcpType.Ssl;
 		protected MiniNode Node;
 
@@ -101,14 +98,14 @@ namespace EventStore.Core.Tests.ClientAPI.ExpectedVersion64Bit {
 		public abstract void WriteTestScenario();
 		public abstract Task Given();
 
-		protected EventRecord WriteSingleEvent(TStreamId eventStreamId,
+		protected EventRecord WriteSingleEvent(string eventStreamName,
 			long eventNumber,
 			string data,
 			DateTime? timestamp = null,
 			Guid eventId = default(Guid),
 			string eventType = "some-type") {
-
-			var logFormat = LogFormatHelper<TStreamId>.LogFormat;
+			var logFormat = LogFormatHelper<TLogFormat, TStreamId>.LogFormat;
+			logFormat.StreamNameIndex.GetOrAddId(eventStreamName, out var eventStreamId);
 			var prepare = LogRecord.SingleWrite(
 				logFormat.RecordFactory,
 				WriterCheckpoint.ReadNonFlushed(),

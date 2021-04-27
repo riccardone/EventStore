@@ -9,8 +9,9 @@ using NUnit.Framework;
 using ReadStreamResult = EventStore.Core.Services.Storage.ReaderIndex.ReadStreamResult;
 
 namespace EventStore.Core.Tests.Services.Storage.Scavenge {
-	[TestFixture]
-	public class when_scavenging_tfchunk_with_version0_log_records_and_deleted_records : ReadIndexTestScenario {
+	[TestFixture(typeof(LogFormat.V2), typeof(string))]
+	[TestFixture(typeof(LogFormat.V3), typeof(long))]
+	public class when_scavenging_tfchunk_with_version0_log_records_and_deleted_records<TLogFormat, TStreamId> : ReadIndexTestScenario<TLogFormat, TStreamId> {
 		private const string _eventStreamId = "ES";
 		private const string _deletedEventStreamId = "Deleted-ES";
 		private PrepareLogRecord _event1, _event2, _event3, _event4, _deleted;

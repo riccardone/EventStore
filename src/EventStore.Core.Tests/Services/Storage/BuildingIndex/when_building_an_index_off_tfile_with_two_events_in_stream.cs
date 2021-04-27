@@ -6,8 +6,9 @@ using NUnit.Framework;
 using ReadStreamResult = EventStore.Core.Services.Storage.ReaderIndex.ReadStreamResult;
 
 namespace EventStore.Core.Tests.Services.Storage.BuildingIndex {
-	[TestFixture]
-	public class when_building_an_index_off_tfile_with_two_events_in_stream : ReadIndexTestScenario {
+	[TestFixture(typeof(LogFormat.V2), typeof(string))]
+	[TestFixture(typeof(LogFormat.V3), typeof(long))]
+	public class when_building_an_index_off_tfile_with_two_events_in_stream<TLogFormat, TStreamId> : ReadIndexTestScenario<TLogFormat, TStreamId> {
 		private Guid _id1;
 		private Guid _id2;
 
@@ -33,14 +34,14 @@ namespace EventStore.Core.Tests.Services.Storage.BuildingIndex {
 		public void the_first_event_can_be_read() {
 			var result = ReadIndex.ReadEvent("test1", 0);
 			Assert.AreEqual(ReadEventResult.Success, result.Result);
-			Assert.AreEqual(new EventRecord(0, _prepare1), result.Record);
+			Assert.AreEqual(new EventRecord(0, _prepare1, "test1"), result.Record);
 		}
 
 		[Test]
 		public void the_second_event_can_be_read() {
 			var result = ReadIndex.ReadEvent("test1", 1);
 			Assert.AreEqual(ReadEventResult.Success, result.Result);
-			Assert.AreEqual(new EventRecord(1, _prepare2), result.Record);
+			Assert.AreEqual(new EventRecord(1, _prepare2, "test1"), result.Record);
 		}
 
 		[Test]
@@ -53,7 +54,7 @@ namespace EventStore.Core.Tests.Services.Storage.BuildingIndex {
 		public void the_last_event_can_be_read_and_is_correct() {
 			var result = ReadIndex.ReadEvent("test1", -1);
 			Assert.AreEqual(ReadEventResult.Success, result.Result);
-			Assert.AreEqual(new EventRecord(1, _prepare2), result.Record);
+			Assert.AreEqual(new EventRecord(1, _prepare2, "test1"), result.Record);
 		}
 
 		[Test]
@@ -61,7 +62,7 @@ namespace EventStore.Core.Tests.Services.Storage.BuildingIndex {
 			var result = ReadIndex.ReadStreamEventsBackward("test1", 0, 1);
 			Assert.AreEqual(ReadStreamResult.Success, result.Result);
 			Assert.AreEqual(1, result.Records.Length);
-			Assert.AreEqual(new EventRecord(0, _prepare1), result.Records[0]);
+			Assert.AreEqual(new EventRecord(0, _prepare1, "test1"), result.Records[0]);
 		}
 
 		[Test]
@@ -69,7 +70,7 @@ namespace EventStore.Core.Tests.Services.Storage.BuildingIndex {
 			var result = ReadIndex.ReadStreamEventsBackward("test1", 1, 1);
 			Assert.AreEqual(ReadStreamResult.Success, result.Result);
 			Assert.AreEqual(1, result.Records.Length);
-			Assert.AreEqual(new EventRecord(1, _prepare2), result.Records[0]);
+			Assert.AreEqual(new EventRecord(1, _prepare2, "test1"), result.Records[0]);
 		}
 
 		[Test]
@@ -77,8 +78,8 @@ namespace EventStore.Core.Tests.Services.Storage.BuildingIndex {
 			var result = ReadIndex.ReadStreamEventsBackward("test1", 1, 2);
 			Assert.AreEqual(ReadStreamResult.Success, result.Result);
 			Assert.AreEqual(2, result.Records.Length);
-			Assert.AreEqual(new EventRecord(1, _prepare2), result.Records[0]);
-			Assert.AreEqual(new EventRecord(0, _prepare1), result.Records[1]);
+			Assert.AreEqual(new EventRecord(1, _prepare2, "test1"), result.Records[0]);
+			Assert.AreEqual(new EventRecord(0, _prepare1, "test1"), result.Records[1]);
 		}
 
 		[Test]
@@ -86,8 +87,8 @@ namespace EventStore.Core.Tests.Services.Storage.BuildingIndex {
 			var result = ReadIndex.ReadStreamEventsBackward("test1", -1, 2);
 			Assert.AreEqual(ReadStreamResult.Success, result.Result);
 			Assert.AreEqual(2, result.Records.Length);
-			Assert.AreEqual(new EventRecord(1, _prepare2), result.Records[0]);
-			Assert.AreEqual(new EventRecord(0, _prepare1), result.Records[1]);
+			Assert.AreEqual(new EventRecord(1, _prepare2, "test1"), result.Records[0]);
+			Assert.AreEqual(new EventRecord(0, _prepare1, "test1"), result.Records[1]);
 		}
 
 		[Test]
