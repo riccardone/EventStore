@@ -12,7 +12,7 @@ namespace EventStore.Core.TransactionLog.LogRecords {
 			Record = new StreamWriteRecord(new RecordView<Raw.StreamWriteHeader>(bytes));
 		}
 
-		public unsafe LogV3StreamWriteRecord(
+		public LogV3StreamWriteRecord(
 			long logPosition,
 			Guid correlationId,
 			Guid eventId,
