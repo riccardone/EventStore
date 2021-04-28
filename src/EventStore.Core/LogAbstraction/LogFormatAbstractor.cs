@@ -2,6 +2,7 @@
 using EventStore.Core.Index.Hashes;
 using EventStore.Core.LogV2;
 using EventStore.Core.LogV3;
+using EventStore.Core.LogV3.FASTER;
 
 namespace EventStore.Core.LogAbstraction {
 	public class LogFormatAbstractor {
@@ -23,7 +24,8 @@ namespace EventStore.Core.LogAbstraction {
 		}
 
 		public static LogFormatAbstractor<long> CreateV3() {
-			var logV3StreamNameIndex = new InMemoryStreamNameIndex();
+//			var logV3StreamNameIndex = new InMemoryStreamNameIndex();
+			var logV3StreamNameIndex = new FASTERStreamNameIndex("stream-name-index.idx", large: false);
 			var metastreams = new LogV3Metastreams();
 			return new LogFormatAbstractor<long>(
 				lowHasher: new IdentityLowHasher(),
