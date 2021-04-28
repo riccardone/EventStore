@@ -1,12 +1,13 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using EventStore.Projections.Core.Messages;
 using EventStore.Projections.Core.Services;
 using EventStore.Projections.Core.Services.Management;
 using NUnit.Framework;
 
-namespace EventStore.Projections.Core.Tests.Services.projections_manager {
-	public abstract class TestFixtureWithJsProjection {
+namespace EventStore.Projections.Core.Tests.Services.Jint
+{
+	public abstract class TestFixtureWithInterpretedProjection {
 		protected ProjectionStateHandlerFactory _stateHandlerFactory;
 		protected IProjectionStateHandler _stateHandler;
 		protected List<string> _logged;
@@ -14,6 +15,8 @@ namespace EventStore.Projections.Core.Tests.Services.projections_manager {
 		protected string _state = null;
 		protected string _sharedState = null;
 		protected IQuerySources _source;
+		protected TimeSpan CompilationTimeout { get; set; } = TimeSpan.FromMilliseconds(1000);
+		protected TimeSpan ExecutionTimeout { get; set; } = TimeSpan.FromMilliseconds(500);
 
 		[SetUp]
 		public void Setup() {
@@ -21,7 +24,8 @@ namespace EventStore.Projections.Core.Tests.Services.projections_manager {
 			_projection = null;
 			Given();
 			_logged = new List<string>();
-			_stateHandlerFactory = new ProjectionStateHandlerFactory(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(500));
+			_stateHandlerFactory =
+				new ProjectionStateHandlerFactory(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(500));
 			_stateHandler = CreateStateHandler();
 			_source = _stateHandler.GetSourceDefinition();
 
@@ -35,9 +39,11 @@ namespace EventStore.Projections.Core.Tests.Services.projections_manager {
 			When();
 		}
 
+		protected const string _projectionType = "INTERPRETED";
+
 		protected virtual IProjectionStateHandler CreateStateHandler() {
 			return _stateHandlerFactory.Create(
-				"JS", _projection, true, logger: (s, _) => {
+				_projectionType, _projection, true, logger: (s, _) => {
 					if (s.StartsWith("P:"))
 						Console.WriteLine(s);
 					else
@@ -49,14 +55,5 @@ namespace EventStore.Projections.Core.Tests.Services.projections_manager {
 		}
 
 		protected abstract void Given();
-
-		[TearDown]
-		public void Teardown() {
-			if (_stateHandler != null)
-				_stateHandler.Dispose();
-			_stateHandler = null;
-			GC.Collect(2, GCCollectionMode.Forced);
-			GC.WaitForPendingFinalizers();
-		}
 	}
 }

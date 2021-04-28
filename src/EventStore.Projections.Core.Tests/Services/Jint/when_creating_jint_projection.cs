@@ -1,98 +1,83 @@
-using System;
+﻿using System;
 using System.Threading;
+using EventStore.ClientAPI;
 using EventStore.Projections.Core.Services;
 using EventStore.Projections.Core.Services.Management;
 using EventStore.Projections.Core.Services.Processing;
+using EventStore.Projections.Core.Tests.Other;
 using EventStore.Projections.Core.v8;
+using Jint.Runtime;
 using NUnit.Framework;
+using NUnit.Framework.Interfaces;
 
-namespace EventStore.Projections.Core.Tests.Services.v8 {
-	[TestFixture]
-	public class when_creating_v8_projection {
+namespace EventStore.Projections.Core.Tests.Services.Jint {
+	class when_creating_jint_projection {
 		private ProjectionStateHandlerFactory _stateHandlerFactory;
+		private const string _projectionType = "INTERPRETED";
 
 		[SetUp]
 		public void Setup() {
-			_stateHandlerFactory = new ProjectionStateHandlerFactory(TimeSpan.FromMilliseconds(1000),
-				TimeSpan.FromMilliseconds(500));
+			_stateHandlerFactory =
+				new ProjectionStateHandlerFactory(TimeSpan.FromMilliseconds(250), TimeSpan.FromMilliseconds(100));
 		}
 
-		[Test, Category("v8")]
-		public void api_can_be_used() {
-			var ver = Js1.ApiVersion();
-			Console.WriteLine(ver);
-		}
-
-		[Test, Category("v8")]
-		public void api_can_be_used2() {
-			var ver = Js1.ApiVersion();
-			Console.WriteLine(ver);
-		}
-
-		[Test, Category("v8")]
+		[Test, Category(_projectionType)]
 		public void it_can_be_created() {
-			using (_stateHandlerFactory.Create("JS", @"", true)) {
+			using (_stateHandlerFactory.Create(_projectionType, @"", true)) {
 			}
 		}
 
-		[Test, Category("v8")]
+		[Test, Category(_projectionType)]
 		public void it_can_log_messages() {
 			string m = null;
-			using (_stateHandlerFactory.Create("JS", @"log(""Message1"");", true, logger: (s, _) => m = s)) {
+			using (_stateHandlerFactory.Create(_projectionType, @"log(""Message1"");", true, logger: (s, _) => m = s)) {
 			}
 
 			Assert.AreEqual("Message1", m);
 		}
 
-		[Test, Category("v8")]
+		[Test, Category(_projectionType)]
 		public void js_syntax_errors_are_reported() {
 			try {
-				using (_stateHandlerFactory.Create("JS", @"log(1;", true, logger: (s, _) => { })) {
+				using (_stateHandlerFactory.Create(_projectionType, @"log(1;", true, logger: (s, _) => { })) {
 				}
 			} catch (Exception ex) {
-				Assert.IsInstanceOf<Js1Exception>(ex);
-				Assert.IsTrue(ex.Message.StartsWith("SyntaxError:"));
+				Assert.IsInstanceOf<Esprima.ParserException>(ex);
 			}
 		}
 
-		[Test, Category("v8")]
+		[Test, Category(_projectionType)]
 		public void js_exceptions_errors_are_reported() {
 			try {
-				using (_stateHandlerFactory.Create("JS", @"throw 123;", true, logger: (s, _) => { })) {
+				using (_stateHandlerFactory.Create(_projectionType, @"throw 123;", true, logger: (s, _) => { })) {
 				}
 			} catch (Exception ex) {
-				Assert.IsInstanceOf<Js1Exception>(ex);
+				Assert.IsInstanceOf<JavaScriptException>(ex);
 				Assert.AreEqual("123", ex.Message);
 			}
 		}
 
-		[Test, Category("v8")]
+		[Test, Category(_projectionType)]
 		public void long_compilation_times_out() {
 			try {
-				using (_stateHandlerFactory.Create("JS",
+				using (_stateHandlerFactory.Create(_projectionType,
 					@"
                                 var i = 0;
                                 while (true) i++;
                     ",
 					true,
 					logger: (s, _) => { },
-					cancelCallbackFactory: (timeout, action) => ThreadPool.QueueUserWorkItem(state => {
-						Console.WriteLine("Calling a callback in " + timeout + "ms");
-						Thread.Sleep(timeout);
-						action();
-					}))) {
+					cancelCallbackFactory: (timeout, action) => { })) {
 				}
 			} catch (Exception ex) {
-				Assert.IsInstanceOf<Js1Exception>(ex);
-				Assert.IsTrue(ex.Message.Contains("terminated"));
+				Assert.IsInstanceOf<TimeoutException>(ex);
 			}
 		}
 
-		[Test, Category("v8")]
+		[Test, Category(_projectionType)]
 		public void long_execution_times_out() {
 			try {
-				//string m = null;
-				using (var h = _stateHandlerFactory.Create("JS",
+				using (var h = _stateHandlerFactory.Create(_projectionType,
 					@"
                         fromAll().when({
                             $any: function (s, e) {
@@ -103,31 +88,30 @@ namespace EventStore.Projections.Core.Tests.Services.v8 {
                         });
                     ",
 					true,
-					logger: Console.WriteLine,
-					cancelCallbackFactory: (timeout, action) => ThreadPool.QueueUserWorkItem(state => {
-						Console.WriteLine("Calling a callback in " + timeout + "ms");
-						Thread.Sleep(timeout);
-						action();
-					}))) {
+					logger: Console.WriteLine)) {
 					h.Initialize();
 					string newState;
 					EmittedEventEnvelope[] emittedevents;
 					h.ProcessEvent(
-						"partition", CheckpointTag.FromPosition(0, 100, 50), "stream", "event", "", Guid.NewGuid(), 1,
+						"partition",
+						CheckpointTag.FromPosition(0, 100, 50),
+						"stream",
+						"event",
+						"",
+						Guid.NewGuid(),
+						1,
 						"", "{}",
 						out newState, out emittedevents);
 				}
 			} catch (Exception ex) {
-				Assert.IsInstanceOf<Js1Exception>(ex);
-				Assert.IsTrue(ex.Message.Contains("terminated"));
+				Assert.IsInstanceOf<TimeoutException>(ex);
 			}
 		}
 
-		[Test, Category("v8")]
+		[Test, Category(_projectionType)]
 		public void long_post_processing_times_out() {
 			try {
-				//string m = null;
-				using (var h = _stateHandlerFactory.Create("JS",
+				using (var h = _stateHandlerFactory.Create(_projectionType,
 					@"
                         fromAll().when({
                             $any: function (s, e) {
@@ -141,12 +125,7 @@ namespace EventStore.Projections.Core.Tests.Services.v8 {
                         });
                     ",
 					true,
-					logger: Console.WriteLine,
-					cancelCallbackFactory: (timeout, action) => ThreadPool.QueueUserWorkItem(state => {
-						Console.WriteLine("Calling a callback in " + timeout + "ms");
-						Thread.Sleep(timeout);
-						action();
-					}))) {
+					logger: Console.WriteLine)) {
 					h.Initialize();
 					string newState;
 					EmittedEventEnvelope[] emittedevents;
@@ -157,19 +136,16 @@ namespace EventStore.Projections.Core.Tests.Services.v8 {
 					h.TransformStateToResult();
 				}
 			} catch (Exception ex) {
-				Assert.IsInstanceOf<Js1Exception>(ex);
-				Assert.IsTrue(ex.Message.Contains("terminated"));
+				Assert.IsInstanceOf<TimeoutException>(ex);
 			}
 		}
 
-		[Test, Explicit, Category("v8"), Category("Manual"),Ignore("CI on Ubuntu not respecting explicit attribute, this should be run manually if needed")]
+		[Test, Category(_projectionType)]
 		public void long_execution_times_out_many() {
-			//string m = null;
 			for (var i = 0; i < 10; i++) {
-				Console.WriteLine(i);
 				try {
 					using (var h = _stateHandlerFactory.Create(
-						"JS", @"
+						_projectionType, @"
                     fromAll().when({
                         $any: function (s, e) {
                             log('1');
@@ -177,13 +153,7 @@ namespace EventStore.Projections.Core.Tests.Services.v8 {
                             while (true) i++;
                         }
                     });
-                ", true, logger: Console.WriteLine,
-						cancelCallbackFactory: (timeout, action) => ThreadPool.QueueUserWorkItem(
-							state => {
-								Console.WriteLine("Calling a callback in " + timeout + "ms");
-								Thread.Sleep(timeout);
-								action();
-							}))) {
+                ", true, logger: Console.WriteLine)) {
 						h.Initialize();
 						string newState;
 						EmittedEventEnvelope[] emittedevents;
@@ -191,8 +161,9 @@ namespace EventStore.Projections.Core.Tests.Services.v8 {
 							"partition", CheckpointTag.FromPosition(0, 100, 50), "stream", "event", "", Guid.NewGuid(),
 							1,
 							"", "{}", out newState, out emittedevents);
+						Assert.Fail("Timeout didn't happen");
 					}
-				} catch (Js1Exception) {
+				} catch (TimeoutException) {
 				}
 			}
 		}

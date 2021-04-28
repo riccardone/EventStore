@@ -54,6 +54,7 @@ namespace EventStore.Projections.Core.Services.Processing {
 		private readonly Dictionary<Guid, CoreProjection> _suspendingProjections = new Dictionary<Guid, CoreProjection>();
 		private Guid _stopQueueId = Guid.Empty;
 		private int _projectionStopTimeoutMs = 5000;
+		private readonly ProjectionStateHandlerFactory _factory;
 
 		public ProjectionCoreService(
 			Guid workerId,
@@ -71,6 +72,8 @@ namespace EventStore.Projections.Core.Services.Processing {
 			_subscriptionDispatcher = subscriptionDispatcher;
 			_timeProvider = timeProvider;
 			_processingStrategySelector = new ProcessingStrategySelector(_subscriptionDispatcher);
+			_factory = new ProjectionStateHandlerFactory(TimeSpan.FromMilliseconds(1000),
+				TimeSpan.FromMilliseconds(500));
 		}
 
 		public ILogger Logger {
@@ -144,7 +147,7 @@ namespace EventStore.Projections.Core.Services.Processing {
 		public void Handle(CoreProjectionManagementMessage.CreateAndPrepare message) {
 			try {
 				//TODO: factory method can throw
-				var stateHandler = CreateStateHandler(
+				var stateHandler = CreateStateHandler(_factory,
 					_timeoutScheduler,
 					_logger,
 					message.HandlerType,
@@ -292,19 +295,19 @@ namespace EventStore.Projections.Core.Services.Processing {
 				projection.Handle(message);
 		}
 
-		public static IProjectionStateHandler CreateStateHandler(
+		public static IProjectionStateHandler CreateStateHandler(ProjectionStateHandlerFactory factory,
 			ISingletonTimeoutScheduler singletonTimeoutScheduler,
 			ILogger logger,
 			string handlerType,
 			string query,
 			bool enableContentTypeValidation) {
-			var stateHandler = new ProjectionStateHandlerFactory().Create(
+			var stateHandler = factory.Create(
 				handlerType,
 				query,
 				enableContentTypeValidation,
 				logger: logger.Verbose,
 				cancelCallbackFactory:
-				singletonTimeoutScheduler == null ? (Action<int, Action>)null : singletonTimeoutScheduler.Schedule);
+				singletonTimeoutScheduler == null ? null : singletonTimeoutScheduler.Schedule);
 			return stateHandler;
 		}
 	}

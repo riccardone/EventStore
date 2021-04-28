@@ -17,15 +17,19 @@
 		<PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
   </ItemGroup>
   <ItemGroup>
+	  <PackageReference Include="Jint" Version="3.0.0-beta-2031" />		
     <ProjectReference Include="..\EventStore.Common\EventStore.Common.csproj" />
     <ProjectReference Include="..\EventStore.Core\EventStore.Core.csproj" />
     <ProjectReference Include="..\EventStore.Transport.Http\EventStore.Transport.Http.csproj" />   
   </ItemGroup>
 	<ItemGroup>
-		<Protobuf Include="../Protos/Grpc/projections.proto" GrpcServices="Server" LinkBase="Services/Grpc" />
+		<Protobuf Include="../Protos/Grpc/projections.proto" GrpcServices="Server" LinkBase="Services/Grpc">
+		  <Link>Services\Grpc\Protos\projections.proto</Link>
+		</Protobuf>
 	</ItemGroup>
 	<ItemGroup>
-		<Folder Include="Prelude\Modules\" />
+		<Folder Include="Services\Grpc\Protos\" />
+		<Folder Include="v8\" />
 	</ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Prelude\1Prelude.js" />

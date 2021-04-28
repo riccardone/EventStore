@@ -6,6 +6,11 @@
 		<Platforms>x64</Platforms>
 	</PropertyGroup>
 	<ItemGroup>
+	  <Compile Remove="Services\checkpoint_strategy\**" />
+	  <EmbeddedResource Remove="Services\checkpoint_strategy\**" />
+	  <None Remove="Services\checkpoint_strategy\**" />
+	</ItemGroup>
+	<ItemGroup>
 		<Compile Remove="Playground\Launchpad.cs" />
 		<Compile Remove="Playground\Launchpad2.cs" />
 		<Compile Remove="Playground\Launchpad3.cs" />
@@ -28,9 +33,6 @@
 		<Content Include="Queries\1Query.js">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
-	</ItemGroup>
-	<ItemGroup>
-		<Folder Include="Services\checkpoint_strategy\" />
 	</ItemGroup>
 	<!-- TODO(jen20): Decide what is correct here -->
 	<PropertyGroup>

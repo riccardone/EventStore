@@ -1,9 +1,19 @@
 using System;
 using EventStore.Projections.Core.Services.v8;
 using System.Linq;
+using EventStore.Projections.Core.Services.Interpreted;
+using ProtoBuf.Meta;
 
 namespace EventStore.Projections.Core.Services.Management {
+	
 	public class ProjectionStateHandlerFactory {
+		private readonly TimeSpan _javascriptCompilationTimeout;
+		private readonly TimeSpan _javascriptExecutionTimeout;
+
+		public ProjectionStateHandlerFactory(TimeSpan javascriptCompilationTimeout, TimeSpan javascriptExecutionTimeout) {
+			_javascriptCompilationTimeout = javascriptCompilationTimeout;
+			_javascriptExecutionTimeout = javascriptExecutionTimeout;
+		}
 		public IProjectionStateHandler Create(
 			string factoryType, string source,
 			bool enableContentTypeValidation,
@@ -36,6 +46,9 @@ namespace EventStore.Projections.Core.Services.Management {
 
 					var handler = Activator.CreateInstance(type, source, logger);
 					result = (IProjectionStateHandler)handler;
+					break;
+				case "interpreted":
+					result = new JintProjectionStateHandler(source, logger, enableContentTypeValidation, _javascriptCompilationTimeout, _javascriptExecutionTimeout);
 					break;
 				default:
 					throw new NotSupportedException(string.Format("'{0}' handler type is not supported", factoryType));

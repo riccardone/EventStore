@@ -44,9 +44,6 @@
 		<Protobuf Include="../Protos/Grpc/*.proto" Exclude="../Protos/Grpc/projections.proto;../Protos/Grpc/cluster.proto" GrpcServices="Server" LinkBase="Services/Transport/Grpc" ProtoRoot="../Protos/Grpc" />
 	</ItemGroup>
 	<ItemGroup>
-		<Protobuf Include="../Protos/Grpc/cluster.proto" GrpcServices="Both" LinkBase="Services/Transport/Grpc" ProtoRoot="../Protos/Grpc" />
-	</ItemGroup>
-	<ItemGroup>
 		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
 			<_Parameter1>EventStore.Core.Tests</_Parameter1>
 		</AssemblyAttribute>
@@ -59,5 +56,33 @@
 		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
 			<_Parameter1>EventStore.ClientAPI.v5.Tests</_Parameter1>
 		</AssemblyAttribute>
+	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="Services\Transport\Grpc\Protos\" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Protobuf Include="..\Protos\Grpc\cluster.proto">
+	    <Link>Services\Transport\Grpc\Protos\cluster.proto</Link>
+	  </Protobuf>
+	</ItemGroup>
+	<ItemGroup>
+	  <Protobuf Update="..\Protos\Grpc\gossip.proto">
+	    <Link>Services\Transport\Grpc\Protos\gossip.proto</Link>
+	  </Protobuf>
+	  <Protobuf Update="..\Protos\Grpc\operations.proto">
+	    <Link>Services\Transport\Grpc\Protos\operations.proto</Link>
+	  </Protobuf>
+	  <Protobuf Update="..\Protos\Grpc\persistent.proto">
+	    <Link>Services\Transport\Grpc\Protos\persistent.proto</Link>
+	  </Protobuf>
+	  <Protobuf Update="..\Protos\Grpc\shared.proto">
+	    <Link>Services\Transport\Grpc\Protos\shared.proto</Link>
+	  </Protobuf>
+	  <Protobuf Update="..\Protos\Grpc\streams.proto">
+	    <Link>Services\Transport\Grpc\Protos\streams.proto</Link>
+	  </Protobuf>
+	  <Protobuf Update="..\Protos\Grpc\users.proto">
+	    <Link>Services\Transport\Grpc\Protos\users.proto</Link>
+	  </Protobuf>
 	</ItemGroup>
 </Project>
