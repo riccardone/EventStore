@@ -1,0 +1,14 @@
+syntax = "proto3";
+package event_store.client.monitoring;
+option java_package = "com.eventstore.dbclient.proto.monitoring";
+
+import "google/protobuf/struct.proto";
+import "shared.proto";
+
+service Monitoring {
+	rpc Stats(event_store.client.shared.Empty) returns (stream StatsResp);	
+}
+
+message StatsResp {
+	google.protobuf.Value stats = 1;
+}
