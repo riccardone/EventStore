@@ -25,6 +25,7 @@ namespace EventStore.Core.LogAbstraction {
 
 		public static LogFormatAbstractor<long> CreateV3() {
 //			var logV3StreamNameIndex = new InMemoryStreamNameIndex();
+//qq we are going to need to pass this in and it be different for differnt concurrent tests i think
 			var logV3StreamNameIndex = new FASTERStreamNameIndex("stream-name-index.idx", large: false);
 			var metastreams = new LogV3Metastreams();
 			return new LogFormatAbstractor<long>(
