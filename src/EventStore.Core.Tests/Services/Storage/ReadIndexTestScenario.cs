@@ -206,6 +206,7 @@ namespace EventStore.Core.Tests.Services.Storage {
 
 		protected EventRecord WriteTransactionBegin(string eventStreamName, long expectedVersion, long eventNumber,
 			string eventData) {
+			LogFormatHelper<TLogFormat, TStreamId>.CheckIfTransactionsSupported();
 			_streamNameIndex.GetOrAddId(eventStreamName, out var eventStreamId);
 			var prepare = LogRecord.Prepare(_recordFactory, WriterCheckpoint.ReadNonFlushed(),
 				Guid.NewGuid(),
@@ -226,6 +227,7 @@ namespace EventStore.Core.Tests.Services.Storage {
 		}
 
 		protected IPrepareLogRecord<TStreamId> WriteTransactionBegin(string eventStreamName, long expectedVersion) {
+			LogFormatHelper<TLogFormat, TStreamId>.CheckIfTransactionsSupported();
 			_streamNameIndex.GetOrAddId(eventStreamName, out var eventStreamId);
 			var prepare = LogRecord.TransactionBegin(_recordFactory, WriterCheckpoint.ReadNonFlushed(), Guid.NewGuid(), eventStreamId,
 				expectedVersion);
@@ -242,6 +244,8 @@ namespace EventStore.Core.Tests.Services.Storage {
 			string eventData,
 			PrepareFlags flags,
 			bool retryOnFail = false) {
+			LogFormatHelper<TLogFormat, TStreamId>.CheckIfTransactionsSupported();
+
 			_streamNameIndex.GetOrAddId(eventStreamName, out var eventStreamId);
 
 			var prepare = LogRecord.Prepare(_recordFactory, WriterCheckpoint.ReadNonFlushed(),
@@ -284,11 +288,13 @@ namespace EventStore.Core.Tests.Services.Storage {
 		}
 
 		protected IPrepareLogRecord<TStreamId> WriteTransactionEnd(Guid correlationId, long transactionId, string eventStreamName) {
+			LogFormatHelper<TLogFormat, TStreamId>.CheckIfTransactionsSupported();
 			_streamNameIndex.GetOrAddId(eventStreamName, out var eventStreamId);
 			return WriteTransactionEnd(correlationId, transactionId, eventStreamId);
 		}
 
 		protected IPrepareLogRecord<TStreamId> WriteTransactionEnd(Guid correlationId, long transactionId, TStreamId eventStreamId) {
+			LogFormatHelper<TLogFormat, TStreamId>.CheckIfTransactionsSupported();
 			var prepare = LogRecord.TransactionEnd(_recordFactory, WriterCheckpoint.ReadNonFlushed(),
 				correlationId,
 				Guid.NewGuid(),
@@ -321,6 +327,7 @@ namespace EventStore.Core.Tests.Services.Storage {
 		}
 
 		protected CommitLogRecord WriteCommit(long preparePos, string eventStreamName, long eventNumber) {
+			LogFormatHelper<TLogFormat, TStreamId>.CheckIfTransactionsSupported();
 			var commit = LogRecord.Commit(WriterCheckpoint.ReadNonFlushed(), Guid.NewGuid(), preparePos, eventNumber);
 			long pos;
 			Assert.IsTrue(Writer.Write(commit, out pos));
@@ -328,11 +335,13 @@ namespace EventStore.Core.Tests.Services.Storage {
 		}
 
 		protected long WriteCommit(Guid correlationId, long transactionId, string eventStreamName, long eventNumber) {
+			LogFormatHelper<TLogFormat, TStreamId>.CheckIfTransactionsSupported();
 			_streamNameIndex.GetOrAddId(eventStreamName, out var eventStreamId);
 			return WriteCommit(correlationId, transactionId, eventStreamId, eventNumber);
 		}
 
 		protected long WriteCommit(Guid correlationId, long transactionId, TStreamId eventStreamId, long eventNumber) {
+			LogFormatHelper<TLogFormat, TStreamId>.CheckIfTransactionsSupported();
 			var commit = LogRecord.Commit(WriterCheckpoint.ReadNonFlushed(), correlationId, transactionId, eventNumber);
 			long pos;
 			Assert.IsTrue(Writer.Write(commit, out pos));
@@ -366,6 +375,7 @@ namespace EventStore.Core.Tests.Services.Storage {
 		}
 
 		protected CommitLogRecord WriteDeleteCommit(IPrepareLogRecord prepare) {
+			LogFormatHelper<TLogFormat, TStreamId>.CheckIfTransactionsSupported();
 			long pos;
 			var commit = LogRecord.Commit(WriterCheckpoint.ReadNonFlushed(),
 				prepare.CorrelationId,

@@ -4,7 +4,7 @@ using NUnit.Framework;
 
 namespace EventStore.Core.Tests.Services.Storage.AllReader {
 	[TestFixture(typeof(LogFormat.V2), typeof(string))]
-	[TestFixture(typeof(LogFormat.V3), typeof(long))]
+	[TestFixture(typeof(LogFormat.V3), typeof(long), Ignore = "Transactions not supported yet")]
 	public class when_a_single_write_before_the_transaction_is_present<TLogFormat, TStreamId> : RepeatableDbTestScenario<TLogFormat, TStreamId> {
 		[Test]
 		public void should_be_able_to_read_the_transactional_writes_when_the_commit_is_present() {

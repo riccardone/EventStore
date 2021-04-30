@@ -22,6 +22,12 @@ namespace EventStore.Core.Tests {
 
 		public static LogFormatAbstractor<TStreamId> LogFormat { get; } =
 			Choose<LogFormatAbstractor<TStreamId>>(LogFormatAbstractor.V2, LogFormatAbstractor.V3);
+
+		public static void CheckIfTransactionsSupported() {
+			if (typeof(TLogFormat) == typeof(LogFormat.V3)) {
+				throw new InvalidOperationException("Transactions not supported yet");
+			}
+		}
 	}
 }
 		
