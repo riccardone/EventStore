@@ -16,19 +16,23 @@ namespace EventStore.Core.Services.Transport.Grpc {
 		private readonly IPublisher _publisher;
 		
 		public override async Task Stats(Empty request, IServerStreamWriter<StatsResp> responseStream, ServerCallContext context) {
-			var enumerator = CollectStats();
-			return base.Stats(request, responseStream, context);
+			await using var enumerator = CollectStats();
+			await using (context.CancellationToken.Register(() => enumerator.DisposeAsync())) {
+				while (await enumerator.MoveNextAsync().ConfigureAwait(false)) {
+					await responseStream.WriteAsync(enumerator.Current).ConfigureAwait(false);
+				}
+			}
 		}
 
 		public Monitoring(IPublisher publisher) {
 			_publisher = publisher;
 		}
 
-		private async IAsyncEnumerable<StatsResp> CollectStats() {
+		private async IAsyncEnumerator<StatsResp> CollectStats() {
 			for (;;) {
 				var source = new TaskCompletionSource<StatsResp>();
 				var envelope = new CallbackEnvelope(message => {
-					if (!(message is MonitoringMessage.GetFreshStatsCompleted completed)) {
+					if (message is not MonitoringMessage.GetFreshStatsCompleted completed) {
 						source.TrySetException(UnknownMessage<MonitoringMessage.GetFreshStatsCompleted>(message));
 					} else {
 						var jsonStr = JsonSerializer.Serialize(completed.Stats);
