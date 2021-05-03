@@ -3,7 +3,6 @@ package event_store.client.monitoring;
 option java_package = "com.eventstore.dbclient.proto.monitoring";
 
 import "google/protobuf/struct.proto";
-import "shared.proto";
 
 service Monitoring {
 	rpc Stats(StatsReq) returns (stream StatsResp);	
@@ -13,6 +12,7 @@ message StatsReq {
 	bool use_metadata = 1;
 	bool use_grouping = 2;
 	string stat_path = 3;
+	uint64 refresh_time_period_in_ms = 4;
 }
 
 message StatsResp {

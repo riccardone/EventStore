@@ -57,7 +57,7 @@ namespace EventStore.Core.Services.Transport.Grpc {
 				
 				yield return resp;
 
-				await Task.Delay(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
+				await Task.Delay(TimeSpan.FromMilliseconds(request.RefreshTimePeriodInMs)).ConfigureAwait(false);
 			}
 		}
 		
