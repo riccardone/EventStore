@@ -6,7 +6,13 @@ import "google/protobuf/struct.proto";
 import "shared.proto";
 
 service Monitoring {
-	rpc Stats(event_store.client.shared.Empty) returns (stream StatsResp);	
+	rpc Stats(StatsReq) returns (stream StatsResp);	
+}
+
+message StatsReq {
+	bool use_metadata = 1;
+	bool use_grouping = 2;
+	string stat_path = 3;
 }
 
 message StatsResp {

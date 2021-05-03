@@ -8,15 +8,15 @@ using EventStore.Core.Bus;
 using EventStore.Core.Messages;
 using EventStore.Core.Messaging;
 using Google.Protobuf.WellKnownTypes;
+using EventStore.Common.Utils;
 using Grpc.Core;
-using Empty = EventStore.Client.Shared.Empty;
 
 namespace EventStore.Core.Services.Transport.Grpc {
 	public partial class Monitoring : EventStore.Client.Monitoring.Monitoring.MonitoringBase {
 		private readonly IPublisher _publisher;
 		
-		public override async Task Stats(Empty request, IServerStreamWriter<StatsResp> responseStream, ServerCallContext context) {
-			await using var enumerator = CollectStats();
+		public override async Task Stats(StatsReq request, IServerStreamWriter<StatsResp> responseStream, ServerCallContext context) {
+			await using var enumerator = CollectStats(request);
 			await using (context.CancellationToken.Register(() => enumerator.DisposeAsync())) {
 				while (await enumerator.MoveNextAsync().ConfigureAwait(false)) {
 					await responseStream.WriteAsync(enumerator.Current).ConfigureAwait(false);
@@ -28,7 +28,7 @@ namespace EventStore.Core.Services.Transport.Grpc {
 			_publisher = publisher;
 		}
 
-		private async IAsyncEnumerator<StatsResp> CollectStats() {
+		private async IAsyncEnumerator<StatsResp> CollectStats(StatsReq request) {
 			for (;;) {
 				var source = new TaskCompletionSource<StatsResp>();
 				var envelope = new CallbackEnvelope(message => {
@@ -52,7 +52,7 @@ namespace EventStore.Core.Services.Transport.Grpc {
 						});
 					}
 				});
-				_publisher.Publish(new MonitoringMessage.GetFreshStats(envelope, x => x, false, true));
+				_publisher.Publish(new MonitoringMessage.GetFreshStats(envelope, GetStatSelector(request.StatPath), request.UseMetadata, request.UseGrouping));
 				var resp = await source.Task.ConfigureAwait(false);
 				
 				yield return resp;
@@ -93,5 +93,37 @@ namespace EventStore.Core.Services.Transport.Grpc {
 
 			return structValue;
 		}
+		private static Func<Dictionary<string, object>, Dictionary<string, object>> GetStatSelector(string statPath) {
+			if (string.IsNullOrEmpty(statPath))
+				return dict => dict;
+
+			//NOTE: this is fix for Mono incompatibility in UriTemplate behavior for /a/b{*C}
+			//todo: use IsMono here?
+			if (statPath.StartsWith("stats/")) {
+				statPath = statPath.Substring(6);
+				if (string.IsNullOrEmpty(statPath))
+					return dict => dict;
+			}
+
+			var groups = statPath.Split('/');
+
+			return dict => {
+				Ensure.NotNull(dict, "dictionary");
+
+				foreach (string groupName in groups) {
+					object item;
+					if (!dict.TryGetValue(groupName, out item))
+						return null;
+
+					dict = item as Dictionary<string, object>;
+
+					if (dict == null)
+						return null;
+				}
+
+				return dict;
+			};
+		}	
+	
 	}
 }
