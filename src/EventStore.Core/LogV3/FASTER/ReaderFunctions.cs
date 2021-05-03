@@ -14,6 +14,9 @@ namespace EventStore.Core.LogV3.FASTER {
 			dst = value;
 		}
 
+		public void ReadCompletionCallback(ref SpanByte key, ref TValue input, ref TValue output, Empty ctx, Status status) {
+		}
+
 		public void CheckpointCompletionCallback(string sessionId, CommitPoint commitPoint) =>
 			throw new NotImplementedException();
 
@@ -33,9 +36,6 @@ namespace EventStore.Core.LogV3.FASTER {
 			throw new NotImplementedException();
 
 		public void Lock(ref RecordInfo recordInfo, ref SpanByte key, ref TValue value, LockType lockType, ref long lockContext) =>
-			throw new NotImplementedException();
-
-		public void ReadCompletionCallback(ref SpanByte key, ref TValue input, ref TValue output, Empty ctx, Status status) =>
 			throw new NotImplementedException();
 
 		public void RMWCompletionCallback(ref SpanByte key, ref TValue input, Empty ctx, Status status) =>

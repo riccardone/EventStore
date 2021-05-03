@@ -52,9 +52,10 @@ namespace EventStore.Core.Tests.XUnit.LogV3 {
 		//	}
 		//}
 
+		static int Offset = 513; //qq magic number
 		static readonly IEnumerable<(long RecordNumber, long StreamId, string StreamName)> _streamsSource =
 			Enumerable
-				.Range(513, 1000)
+				.Range(Offset, int.MaxValue - Offset)
 				.Select(x => (RecordNumber: (long) x, StreamId: (long) x * 2, StreamName: $"stream{x * 2}"));
 	
 		void PopulateSut(int numStreams) {
@@ -62,6 +63,11 @@ namespace EventStore.Core.Tests.XUnit.LogV3 {
 				_sut.GetOrAddId(tuple.StreamName, out var streamId, out var _, out var _);
 				Assert.Equal(tuple.StreamId, streamId);
 			});
+		}
+
+		void DeleteStreams(int numTotalStreams, int numToDelete) {
+			_streamsSource.Skip(numTotalStreams - numToDelete).Take(numToDelete).ToList().ForEach(tuple =>
+				_sut.Delete(tuple.StreamName));
 		}
 
 		IList<(long RecordNumber, long StreamId, string StreamName)> GenerateStreamsStream(int numStreams) {
@@ -91,6 +97,104 @@ namespace EventStore.Core.Tests.XUnit.LogV3 {
 				//qqqqq this isn't sufficient really
 				Assert.False(_sut.GetOrAddId($"{Guid.NewGuid()}", out var streamId, out var _, out var _));
 				Assert.Equal(streamsStream.Last().StreamId + 2, streamId);
+			}
+		}
+
+		[Fact]
+		public void can_write() {
+			var numStreams = 5000;
+			PopulateSut(numStreams);
+
+			Assert.True(_sut.GetOrAddId("stream4500", out var streamNumber, out var newNumber, out var newName));
+			Assert.Equal("stream4500", newName);
+			Assert.Equal(4500, streamNumber);
+
+			Assert.Equal(4500, _sut.LookupId("stream4500"));
+		}
+
+		[Fact]
+		public void can_wtf() {
+			var numStreams = 2000;
+			PopulateSut(numStreams);
+
+			//			Assert.True(_sut.GetOrAddId("stream1030", out var streamNumber, out var newNumber, out var newName));
+			//			Assert.Equal(1030, streamNumber);
+
+			Assert.Equal(1026, _sut.LookupId("stream1026"));
+			Assert.Equal(1026, _sut.LookupId("stream1026"));
+			Assert.Equal(1026, _sut.LookupId("stream1026"));
+		}
+
+		//qq probably temp
+		[Fact]
+		public void can_scan() {
+			var numStreams = 5000;
+			PopulateSut(numStreams);
+
+			var scanned = _sut.Scan().ToList();
+
+			//qq horrible numbers, probbly want a loop so we can test across pages
+			Assert.Equal(numStreams, scanned.Count);
+			Assert.Equal(1026, scanned[0].Item1);
+			Assert.Equal(1028, scanned[1].Item1);
+			Assert.Equal(1030, scanned[2].Item1);
+			Assert.Equal(1032, scanned[3].Item1);
+			Assert.Equal(1034, scanned[4].Item1);
+		}
+
+		//qq probably temp
+		[Fact]
+		public void can_scan_backwards() {
+			var numStreams = 1000;
+			PopulateSut(numStreams);
+
+			var scanned = _sut.ScanBackwards().ToList();
+
+			Assert.Equal(numStreams, scanned.Count);
+
+			for (int i = numStreams - 1; i >= 0; i--) {
+				var expectedStreamId = 1024 + 2 * (numStreams - i);
+				Assert.Equal(expectedStreamId, scanned[i].Item1);
+				Assert.Equal($"stream{expectedStreamId}", scanned[i].Item2);
+			}
+		}
+
+		[Fact]
+		public void can_scan_forwards_skipping_deleted() {
+			var numStreams = 10000;
+			var deletedStreams = 500;
+			var remainingStreams = numStreams - deletedStreams;
+			PopulateSut(numStreams);
+			DeleteStreams(numStreams, deletedStreams);
+
+			var scanned = _sut.Scan().ToList();
+
+			Assert.Equal(remainingStreams, scanned.Count);
+
+			for (int i = remainingStreams - 1; i >= 0; i--) {
+				//qqqq fix this
+				var expectedStreamId = 1024 + 2 * (remainingStreams - i);
+				Assert.Equal(expectedStreamId, scanned[i].Item1);
+				Assert.Equal($"stream{expectedStreamId}", scanned[i].Item2);
+			}
+		}
+
+		[Fact]
+		public void can_scan_backwards_skipping_deleted() {
+			var numStreams = 10000;
+			var deletedStreams = 500;
+			var remainingStreams = numStreams - deletedStreams;
+			PopulateSut(numStreams);
+			DeleteStreams(numStreams, deletedStreams);
+
+			var scanned = _sut.ScanBackwards().ToList();
+
+			Assert.Equal(remainingStreams, scanned.Count);
+
+			for (int i = remainingStreams - 1; i >= 0; i--) {
+				var expectedStreamId = 1024 + 2 * (remainingStreams - i);
+				Assert.Equal(expectedStreamId, scanned[i].Item1);
+				Assert.Equal($"stream{expectedStreamId}", scanned[i].Item2);
 			}
 		}
 
