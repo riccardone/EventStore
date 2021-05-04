@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using EventStore.Core.Data;
@@ -14,29 +15,21 @@ namespace EventStore.Core.Tests.Services.Storage.Scavenge {
 	public class when_scavenging_tfchunk_with_deleted_records<TLogFormat, TStreamId> : ReadIndexTestScenario<TLogFormat, TStreamId> {
 		private const string _eventStreamId = "ES";
 		private const string _deletedEventStreamId = "Deleted-ES";
-		private PrepareLogRecord _event1, _event2, _event3, _event4, _deleted;
+		private EventRecord _event1, _event2, _event3, _event4, _deleted;
 
 		protected override void WriteTestScenario() {
 			// Stream that will be kept
-			_event1 = WriteSingleEventWithLogVersion0(Guid.NewGuid(), _eventStreamId, WriterCheckpoint.ReadNonFlushed(),
-				0);
-			_event2 = WriteSingleEventWithLogVersion0(Guid.NewGuid(), _eventStreamId, WriterCheckpoint.ReadNonFlushed(),
-				1);
+			_event1 = WriteSingleEvent(_eventStreamId, 0, "bla1");
+			_event2 = WriteSingleEvent(_eventStreamId, 1, "bla1");
 
 			// Stream that will be deleted
-			WriteSingleEventWithLogVersion0(Guid.NewGuid(), _deletedEventStreamId, WriterCheckpoint.ReadNonFlushed(),
-				0);
-			WriteSingleEventWithLogVersion0(Guid.NewGuid(), _deletedEventStreamId, WriterCheckpoint.ReadNonFlushed(),
-				1);
-			_deleted = WriteSingleEventWithLogVersion0(Guid.NewGuid(), _deletedEventStreamId,
-				WriterCheckpoint.ReadNonFlushed(), int.MaxValue - 1,
-				PrepareFlags.StreamDelete | PrepareFlags.TransactionBegin | PrepareFlags.TransactionEnd);
+			WriteSingleEvent(_deletedEventStreamId, 0, "bla1");
+			WriteSingleEvent(_deletedEventStreamId, 1, "bla1");
+			_deleted = WriteDelete(_deletedEventStreamId);
 
 			// Stream that will be kept
-			_event3 = WriteSingleEventWithLogVersion0(Guid.NewGuid(), _eventStreamId, WriterCheckpoint.ReadNonFlushed(),
-				2);
-			_event4 = WriteSingleEventWithLogVersion0(Guid.NewGuid(), _eventStreamId, WriterCheckpoint.ReadNonFlushed(),
-				3);
+			_event3 = WriteSingleEvent(_eventStreamId, 2, "bla1");
+			_event4 = WriteSingleEvent(_eventStreamId, 3, "bla1");
 
 			Writer.CompleteChunk();
 
@@ -64,25 +57,12 @@ namespace EventStore.Core.Tests.Services.Storage.Scavenge {
 				result = chunk.TryReadClosestForward(result.NextPosition);
 			}
 
-			var deletedRecord = (PrepareLogRecord)chunkRecords.First(x => x.RecordType == LogRecordType.Prepare
-			                                                              && ((PrepareLogRecord)x).EventStreamId ==
-			                                                              _deletedEventStreamId);
+			_streamNameIndex.GetOrAddId(_deletedEventStreamId, out var id);
+			var deletedRecord = (IPrepareLogRecord<TStreamId>)chunkRecords.First(
+				x => x.RecordType == LogRecordType.Prepare
+				     && EqualityComparer<TStreamId>.Default.Equals(((IPrepareLogRecord<TStreamId>)x).EventStreamId, id));
 
 			Assert.AreEqual(EventNumber.DeletedStream - 1, deletedRecord.ExpectedVersion);
-		}
-
-		[Test]
-		public void the_log_records_are_still_version_0() {
-			var chunk = Db.Manager.GetChunk(0);
-			var chunkRecords = new List<ILogRecord>();
-			RecordReadResult result = chunk.TryReadFirst();
-			while (result.Success) {
-				chunkRecords.Add(result.LogRecord);
-				result = chunk.TryReadClosestForward(result.NextPosition);
-			}
-
-			Assert.IsTrue(chunkRecords.All(x => x.Version == LogRecordVersion.LogRecordV0));
-			Assert.AreEqual(10, chunkRecords.Count);
 		}
 
 		[Test]

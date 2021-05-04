@@ -106,8 +106,12 @@ namespace EventStore.Core.Tests.Services.Storage {
 		public void Dispose() {
 			//epochManager?.Dispose();
 			//reader?.Dispose();
-			_writer?.Dispose();
-			_db?.Close();
+			try {
+				_writer?.Dispose();
+			} catch {
+				//workaround for TearDown error
+			}
+
 			_db?.Dispose();
 		}
 	}

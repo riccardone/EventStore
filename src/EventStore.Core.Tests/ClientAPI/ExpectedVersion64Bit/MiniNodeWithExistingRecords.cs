@@ -122,9 +122,9 @@ namespace EventStore.Core.Tests.ClientAPI.ExpectedVersion64Bit {
 			var commit = LogRecord.Commit(WriterCheckpoint.ReadNonFlushed(), prepare.CorrelationId, prepare.LogPosition,
 				eventNumber);
 			Assert.IsTrue(Writer.Write(commit, out pos));
+			Assert.AreEqual(eventStreamId, prepare.EventStreamId);
 
-			var streamName = logFormat.StreamNames.LookupName(prepare.EventStreamId);
-			var eventRecord = new EventRecord(eventNumber, prepare, streamName);
+			var eventRecord = new EventRecord(eventNumber, prepare, eventStreamName);
 			return eventRecord;
 		}
 	}

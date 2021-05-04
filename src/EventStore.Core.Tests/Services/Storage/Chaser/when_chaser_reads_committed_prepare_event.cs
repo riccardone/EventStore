@@ -12,12 +12,18 @@ namespace EventStore.Core.Tests.Services.Storage.Chaser {
 		public override void When() {
 			_eventId = Guid.NewGuid();
 			_transactionId = Guid.NewGuid();
-			var record = new PrepareLogRecord(logPosition: 0,
+
+			var logFormat = LogFormatHelper<TLogFormat, TStreamId>.LogFormat;
+			logFormat.StreamNameIndex.GetOrAddId("WorldEnding", out var streamId);
+
+			var record = LogRecord.Prepare(
+				factory: logFormat.RecordFactory,
+				logPosition: 0,
 				eventId: _eventId,
 				correlationId: _transactionId,
-				transactionPosition: 0xDEAD,
+				transactionPos: 0,
 				transactionOffset: 0xBEEF,
-				eventStreamId: "WorldEnding",
+				eventStreamId: streamId,
 				expectedVersion: 1234,
 				timeStamp: new DateTime(2012, 12, 21),
 				flags:   PrepareFlags.IsCommitted | PrepareFlags.TransactionEnd,

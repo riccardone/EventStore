@@ -4,7 +4,7 @@ using NUnit.Framework;
 
 namespace EventStore.Core.Tests.Services.Storage.CheckCommitStartingAt {
 	[TestFixture(typeof(LogFormat.V2), typeof(string))]
-	[TestFixture(typeof(LogFormat.V3), typeof(long))]
+	[TestFixture(typeof(LogFormat.V3), typeof(long), Ignore = "Transactions not supported yet")]
 	public class when_writing_few_prepares_and_committing_one<TLogFormat, TStreamId> : ReadIndexTestScenario<TLogFormat, TStreamId> {
 		private IPrepareLogRecord _prepare0;
 		private IPrepareLogRecord _prepare1;

@@ -309,7 +309,8 @@ namespace EventStore.Core.Tests.Services.Storage {
 			long expectedVersion,
 			Guid eventId = default(Guid),
 			string eventType = null,
-			string data = null) {
+			string data = null,
+			PrepareFlags additionalFlags = PrepareFlags.None) {
 			_streamNameIndex.GetOrAddId(eventStreamName, out var eventStreamId);
 			long pos;
 			var prepare = LogRecord.SingleWrite(_recordFactory, WriterCheckpoint.ReadNonFlushed(),
@@ -320,7 +321,8 @@ namespace EventStore.Core.Tests.Services.Storage {
 				eventType.IsEmptyString() ? "some-type" : eventType,
 				data.IsEmptyString() ? LogRecord.NoData : Helper.UTF8NoBom.GetBytes(data),
 				LogRecord.NoData,
-				DateTime.UtcNow);
+				DateTime.UtcNow,
+				additionalFlags);
 			Assert.IsTrue(Writer.Write(prepare, out pos));
 
 			return prepare;

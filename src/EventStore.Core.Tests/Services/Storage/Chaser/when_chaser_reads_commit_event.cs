@@ -22,7 +22,7 @@ namespace EventStore.Core.Tests.Services.Storage.Chaser {
 				logPosition: 0,
 				eventId: _eventId,
 				correlationId: _transactionId,
-				transactionPos: 0xDEAD,
+				transactionPos: 0,
 				transactionOffset: 0xBEEF,
 				eventStreamId: streamId,
 				expectedVersion: 1234,

@@ -21,8 +21,10 @@ namespace EventStore.Core.Tests.Services.Storage.CheckCommitStartingAt {
 			var res = ReadIndex.IndexWriter.CheckCommitStartingAt(_prepare0.LogPosition,
 				WriterCheckpoint.ReadNonFlushed());
 
+			_streamNameIndex.GetOrAddId("ES", out var streamId);
+
 			Assert.AreEqual(CommitDecision.Ok, res.Decision);
-			Assert.AreEqual("ES", res.EventStreamId);
+			Assert.AreEqual(streamId, res.EventStreamId);
 			Assert.AreEqual(-1, res.CurrentVersion);
 			Assert.AreEqual(-1, res.StartEventNumber);
 			Assert.AreEqual(-1, res.EndEventNumber);
@@ -30,7 +32,7 @@ namespace EventStore.Core.Tests.Services.Storage.CheckCommitStartingAt {
 			res = ReadIndex.IndexWriter.CheckCommitStartingAt(_prepare1.LogPosition, WriterCheckpoint.ReadNonFlushed());
 
 			Assert.AreEqual(CommitDecision.Ok, res.Decision);
-			Assert.AreEqual("ES", res.EventStreamId);
+			Assert.AreEqual(streamId, res.EventStreamId);
 			Assert.AreEqual(-1, res.CurrentVersion);
 			Assert.AreEqual(-1, res.StartEventNumber);
 			Assert.AreEqual(-1, res.EndEventNumber);
@@ -38,7 +40,7 @@ namespace EventStore.Core.Tests.Services.Storage.CheckCommitStartingAt {
 			res = ReadIndex.IndexWriter.CheckCommitStartingAt(_prepare2.LogPosition, WriterCheckpoint.ReadNonFlushed());
 
 			Assert.AreEqual(CommitDecision.Ok, res.Decision);
-			Assert.AreEqual("ES", res.EventStreamId);
+			Assert.AreEqual(streamId, res.EventStreamId);
 			Assert.AreEqual(-1, res.CurrentVersion);
 			Assert.AreEqual(-1, res.StartEventNumber);
 			Assert.AreEqual(-1, res.EndEventNumber);

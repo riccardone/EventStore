@@ -11,12 +11,12 @@ namespace EventStore.Core.Tests.Services.Storage.Scavenge {
 	[TestFixture(typeof(LogFormat.V2), typeof(string))]
 	[TestFixture(typeof(LogFormat.V3), typeof(long))]
 	public class
-		when_stream_is_softdeleted_and_temp_with_log_version_0_but_some_events_are_in_multiple_chunks<TLogFormat, TStreamId> :
+		when_stream_is_softdeleted_and_temp_but_some_events_are_in_multiple_chunks<TLogFormat, TStreamId> :
 			ScavengeTestScenario<TLogFormat, TStreamId> {
 		protected override DbResult CreateDb(TFChunkDbCreationHelper<TLogFormat, TStreamId> dbCreator) {
 			return dbCreator.Chunk(Rec.Prepare("test"))
 				.Chunk(Rec.Prepare( "test"),
-					Rec.Prepare("$$test", streamMetadata: new StreamMetadata(null, null, int.MaxValue, true, null, null)))
+					Rec.Prepare("$$test", streamMetadata: new StreamMetadata(null, null, EventNumber.DeletedStream, true, null, null)))
 				.Chunk(Rec.Prepare("random")) // Need an incomplete chunk to ensure writer checkpoints are correct
 				.CreateDb();
 		}

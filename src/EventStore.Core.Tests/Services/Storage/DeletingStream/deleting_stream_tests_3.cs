@@ -21,7 +21,7 @@ namespace EventStore.Core.Tests.Services.Storage.DeletingStream {
 
 			WriteSingleEvent("ES2", 2, new string('.', 3000), retryOnFail: true); // chunk 4
 			WriteSingleEvent("ES", 2, new string('.', 3000));
-			WriteSingleEvent("ES", 3, new string('.', 3000));
+			WriteSingleEvent("ES", 3, new string('.', 2500));
 
 			WriteDelete("ES1");
 			WriteDelete("ES2");

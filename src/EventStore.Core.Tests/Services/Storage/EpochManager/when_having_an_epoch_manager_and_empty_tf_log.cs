@@ -138,7 +138,6 @@ namespace EventStore.Core.Tests.Services.Storage {
 			//epochManager?.Dispose();
 			//reader?.Dispose();
 			_writer?.Dispose();
-			_db?.Close();
 			_db?.Dispose();
 		}
 	}
