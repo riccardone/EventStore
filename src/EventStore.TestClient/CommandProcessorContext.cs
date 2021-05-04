@@ -7,7 +7,7 @@ using ILogger = Serilog.ILogger;
 namespace EventStore.TestClient {
 	/// <summary>
 	/// This context is passed to the instances of <see cref="ICmdProcessor"/>
-	/// when they are executed. It can also be used for async syncrhonization
+	/// when they are executed. It can also be used for async synchronization
 	/// </summary>
 	public class CommandProcessorContext {
 		public int ExitCode;
@@ -17,7 +17,13 @@ namespace EventStore.TestClient {
 		/// <summary>
 		/// Current logger of the test client
 		/// </summary>
-		public readonly Serilog.ILogger Log;
+		public readonly ILogger Log;
+
+		/// <summary>
+		/// Json Stats logger of the test client
+		/// </summary>
+		public readonly ILogger RegularStatsLog =
+			Serilog.Log.ForContext(Serilog.Core.Constants.SourceContextPropertyName, "REGULAR-STATS-LOGGER");
 
 		public readonly TcpTestClient _tcpTestClient;
 		public readonly GrpcTestClient _grpcTestClient;
