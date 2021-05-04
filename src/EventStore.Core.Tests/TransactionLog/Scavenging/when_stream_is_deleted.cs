@@ -9,8 +9,8 @@ namespace EventStore.Core.Tests.TransactionLog.Scavenging {
 	public class when_stream_is_deleted<TLogFormat, TStreamId> : ScavengeTestScenario<TLogFormat, TStreamId> {
 		protected override DbResult CreateDb(TFChunkDbCreationHelper<TLogFormat, TStreamId> dbCreator) {
 			return dbCreator
-				.Chunk(Rec.Prepare(0, "bla"), Rec.Prepare(0, "bla"), Rec.Commit(0, "bla"))
-				.Chunk(Rec.Delete(1, "bla"), Rec.Commit(1, "bla"))
+				.Chunk(Rec.Prepare("bla"), Rec.Prepare("bla"))
+				.Chunk(Rec.Delete("bla"))
 				.CompleteLastChunk()
 				.CreateDb();
 		}
@@ -37,8 +37,8 @@ namespace EventStore.Core.Tests.TransactionLog.Scavenging {
 
 		protected override DbResult CreateDb(TFChunkDbCreationHelper<TLogFormat, TStreamId> dbCreator) {
 			return dbCreator
-				.Chunk(Rec.Prepare(0, "bla"), Rec.Prepare(0, "bla"), Rec.Commit(0, "bla"))
-				.Chunk(Rec.Delete(1, "bla"), Rec.Commit(1, "bla"))
+				.Chunk(Rec.Prepare("bla"), Rec.Prepare("bla"))
+				.Chunk(Rec.Delete("bla"))
 				.CompleteLastChunk()
 				.CreateDb();
 		}

@@ -10,15 +10,11 @@ namespace EventStore.Core.Tests.Services.Storage.Scavenge {
 	[TestFixture(typeof(LogFormat.V3), typeof(long))]
 	public class when_stream_is_softdeleted_and_temp_but_some_metaevents_are_in_multiple_chunks<TLogFormat, TStreamId> : ScavengeTestScenario<TLogFormat, TStreamId> {
 		protected override DbResult CreateDb(TFChunkDbCreationHelper<TLogFormat, TStreamId> dbCreator) {
-			return dbCreator.Chunk(Rec.Prepare(0, "$$test", metadata: new StreamMetadata(tempStream: true)),
-					Rec.Commit(0, "$$test"))
-				.Chunk(Rec.Prepare(1, "test"),
-					Rec.Commit(1, "test"),
-					Rec.Prepare(2, "test"),
-					Rec.Commit(2, "test"),
-					Rec.Prepare(3, "$$test",
-						metadata: new StreamMetadata(truncateBefore: EventNumber.DeletedStream, tempStream: true)),
-					Rec.Commit(3, "$$test"))
+			return dbCreator.Chunk(Rec.Prepare("$$test", streamMetadata: new StreamMetadata(tempStream: true)))
+				.Chunk(Rec.Prepare("test"),
+					Rec.Prepare("test"),
+					Rec.Prepare("$$test",
+						streamMetadata: new StreamMetadata(truncateBefore: EventNumber.DeletedStream, tempStream: true)))
 				.CompleteLastChunk()
 				.CreateDb();
 		}
@@ -27,10 +23,8 @@ namespace EventStore.Core.Tests.Services.Storage.Scavenge {
 			return new[] {
 				new ILogRecord[0],
 				new[] {
-					dbResult.Recs[1][2],
-					dbResult.Recs[1][3],
-					dbResult.Recs[1][4],
-					dbResult.Recs[1][5]
+					dbResult.Recs[1][1],
+					dbResult.Recs[1][2]
 				}
 			};
 		}

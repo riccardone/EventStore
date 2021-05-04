@@ -9,18 +9,17 @@ namespace EventStore.Core.Tests.TransactionLog.Scavenging {
 	public class when_stream_is_deleted_and_bulk_transaction_spans_chunks_boundary<TLogFormat, TStreamId> : ScavengeTestScenario<TLogFormat, TStreamId> {
 		protected override DbResult CreateDb(TFChunkDbCreationHelper<TLogFormat, TStreamId> dbCreator) {
 			return dbCreator
-				.Chunk(Rec.Prepare(0, "bla"),
-					Rec.Commit(0, "bla"),
-					Rec.Prepare(1, "bla"),
-					Rec.Prepare(1, "bla"),
-					Rec.Prepare(1, "bla"),
-					Rec.Prepare(1, "bla"))
-				.Chunk(Rec.Prepare(1, "bla"),
-					Rec.Prepare(1, "bla"),
-					Rec.Prepare(1, "bla"),
-					Rec.Commit(1, "bla"),
-					Rec.Delete(2, "bla"),
-					Rec.Commit(2, "bla"))
+				.Chunk(Rec.TransPrepare(0, "bla"),
+					Rec.TransCommit(0, "bla"),
+					Rec.TransPrepare(1, "bla"),
+					Rec.TransPrepare(1, "bla"),
+					Rec.TransPrepare(1, "bla"),
+					Rec.TransPrepare(1, "bla"))
+				.Chunk(Rec.TransPrepare(1, "bla"),
+					Rec.TransPrepare(1, "bla"),
+					Rec.TransPrepare(1, "bla"),
+					Rec.TransCommit(1, "bla"),
+					Rec.Delete("bla"))
 				.CompleteLastChunk()
 				.CreateDb();
 		}

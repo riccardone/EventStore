@@ -9,13 +9,13 @@ namespace EventStore.Core.Tests.Services.Storage.AllReader {
 		[Test]
 		public void should_be_able_to_read_the_transactional_writes_when_the_commit_is_present() {
 			CreateDb(
-				Rec.Prepare(0, "single_write_stream_id_1", prepareFlags: PrepareFlags.Data | PrepareFlags.IsCommitted),
-				Rec.TransSt(1, "transaction_stream_id"),
-				Rec.Prepare(1, "transaction_stream_id"),
+				Rec.Prepare("single_write_stream_id_1"),
+				Rec.TransStart(1, "transaction_stream_id"),
+				Rec.TransPrepare(1, "transaction_stream_id"),
 				Rec.TransEnd(1, "transaction_stream_id"),
-				Rec.Prepare(2, "single_write_stream_id_2", prepareFlags: PrepareFlags.Data | PrepareFlags.IsCommitted),
-				Rec.Prepare(3, "single_write_stream_id_3", prepareFlags: PrepareFlags.Data | PrepareFlags.IsCommitted),
-				Rec.Prepare(4, "single_write_stream_id_4", prepareFlags: PrepareFlags.Data | PrepareFlags.IsCommitted));
+				Rec.Prepare("single_write_stream_id_2"),
+				Rec.Prepare("single_write_stream_id_3"),
+				Rec.Prepare("single_write_stream_id_4"));
 
 			var firstRead = ReadIndex.ReadAllEventsForward(new Data.TFPos(0, 0), 10);
 
@@ -26,14 +26,14 @@ namespace EventStore.Core.Tests.Services.Storage.AllReader {
 			Assert.AreEqual("single_write_stream_id_4", firstRead.Records[3].Event.EventStreamId);
 
 			CreateDb(
-				Rec.Prepare(0, "single_write_stream_id_1", prepareFlags: PrepareFlags.Data | PrepareFlags.IsCommitted),
-				Rec.TransSt(1, "transaction_stream_id"),
-				Rec.Prepare(1, "transaction_stream_id"),
+				Rec.Prepare("single_write_stream_id_1"),
+				Rec.TransStart(1, "transaction_stream_id"),
+				Rec.TransPrepare(1, "transaction_stream_id"),
 				Rec.TransEnd(1, "transaction_stream_id"),
-				Rec.Prepare(2, "single_write_stream_id_2", prepareFlags: PrepareFlags.Data | PrepareFlags.IsCommitted),
-				Rec.Prepare(3, "single_write_stream_id_3", prepareFlags: PrepareFlags.Data | PrepareFlags.IsCommitted),
-				Rec.Prepare(4, "single_write_stream_id_4", prepareFlags: PrepareFlags.Data | PrepareFlags.IsCommitted),
-				Rec.Commit(1, "transaction_stream_id"));
+				Rec.Prepare("single_write_stream_id_2"),
+				Rec.Prepare("single_write_stream_id_3"),
+				Rec.Prepare("single_write_stream_id_4"),
+				Rec.TransCommit(1, "transaction_stream_id"));
 
 			var transactionRead = ReadIndex.ReadAllEventsForward(firstRead.NextPos, 10);
 

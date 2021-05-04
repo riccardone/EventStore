@@ -15,12 +15,11 @@ namespace EventStore.Core.Tests.TransactionLog.Scavenging {
 
 		protected override DbResult CreateDb(TFChunkDbCreationHelper<TLogFormat, TStreamId> dbCreator) {
 			return dbCreator
-				.Chunk(Rec.Prepare(0, "$$bla"),
-					Rec.Prepare(0, "$$bla"),
-					Rec.Prepare(0, "$$bla"),
-					Rec.Prepare(0, "$$bla"),
-					Rec.Prepare(0, "$$bla"),
-					Rec.Commit(0, "$$bla"))
+				.Chunk(Rec.Prepare("$$bla"),
+					Rec.Prepare("$$bla"),
+					Rec.Prepare("$$bla"),
+					Rec.Prepare("$$bla"),
+					Rec.Prepare("$$bla"))
 				.CompleteLastChunk()
 				.CreateDb();
 		}

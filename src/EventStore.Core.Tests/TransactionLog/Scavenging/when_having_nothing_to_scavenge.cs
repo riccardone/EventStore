@@ -8,13 +8,10 @@ namespace EventStore.Core.Tests.TransactionLog.Scavenging {
 	public class when_having_nothing_to_scavenge<TLogFormat, TStreamId> : ScavengeTestScenario<TLogFormat, TStreamId> {
 		protected override DbResult CreateDb(TFChunkDbCreationHelper<TLogFormat, TStreamId> dbCreator) {
 			return dbCreator
-				.Chunk(Rec.Prepare(0, "bla"),
-					Rec.Prepare(1, "bla"),
-					Rec.Commit(0, "bla"))
-				.Chunk(Rec.Prepare(2, "bla3"),
-					Rec.Prepare(2, "bla3"),
-					Rec.Commit(1, "bla"),
-					Rec.Commit(2, "bla3"))
+				.Chunk(Rec.Prepare("bla"),
+					Rec.Prepare("bla"))
+				.Chunk(Rec.Prepare( "bla3"),
+					Rec.Prepare("bla3"))
 				.CompleteLastChunk()
 				.CreateDb();
 		}
