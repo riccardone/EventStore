@@ -10,6 +10,8 @@ namespace EventStore.Core.LogV3 {
 		// but more appealing for the settings stream.
 		// Reservations are 2 apart to make room for their metastreams.
 		public static long FirstRealStream { get; } = 1024;
+		// difference between each stream record (2 because of metastreams)
+		public static long StreamInterval { get; } = 2;
 
 		// virtual stream so that we can write metadata to $$$all
 		private const long AllStreamNumber = 2;

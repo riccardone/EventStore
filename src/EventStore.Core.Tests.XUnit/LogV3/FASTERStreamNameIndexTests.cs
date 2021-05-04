@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using EventStore.Core.LogV3;
 using EventStore.Core.LogV3.FASTER;
 using Xunit;
 
 namespace EventStore.Core.Tests.XUnit.LogV3 {
 	public class FASTERStreamNameIndexTests {
-		readonly string _logName = $"index/{nameof(FASTERStreamNameIndexTests)}.{DateTime.Now:s}".Replace(':', '_');
+		readonly string _logName = $"index/{nameof(FASTERStreamNameIndexTests)}.{DateTime.Now:s}.{Guid.NewGuid()}".Replace(':', '_');
 		readonly FASTERStreamNameIndex _sut;
 
 		public FASTERStreamNameIndexTests() {
@@ -26,14 +27,16 @@ namespace EventStore.Core.Tests.XUnit.LogV3 {
 		}
 
 		[Fact]
-		public async Task can_persist() {
+		public async Task can_checkpoint_log() {
 			Assert.False(_sut.GetOrAddId("streamA", out var streamNumber, out _, out _));
-			await _sut.Persist();
+			await _sut.CheckpointLog();
 			_sut.Dispose();
 			
 			var sut2 = new FASTERStreamNameIndex(_logName, large: false);
 			Assert.True(sut2.GetOrAddId("streamA", out var streamNumberAfterRecovery, out _, out _));
 			Assert.Equal(streamNumber, streamNumberAfterRecovery);
+			Assert.False(sut2.GetOrAddId("streamB", out var streamNumberB, out _, out _));
+			Assert.Equal(streamNumber + 2, streamNumberB);
 		}
 
 		//qq
@@ -52,7 +55,7 @@ namespace EventStore.Core.Tests.XUnit.LogV3 {
 		//	}
 		//}
 
-		static int Offset = 513; //qq magic number
+		static int Offset = 512; //qq magic number
 		static readonly IEnumerable<(long RecordNumber, long StreamId, string StreamName)> _streamsSource =
 			Enumerable
 				.Range(Offset, int.MaxValue - Offset)
@@ -70,7 +73,7 @@ namespace EventStore.Core.Tests.XUnit.LogV3 {
 				_sut.Delete(tuple.StreamName));
 		}
 
-		IList<(long RecordNumber, long StreamId, string StreamName)> GenerateStreamsStream(int numStreams) {
+		static IList<(long RecordNumber, long StreamId, string StreamName)> GenerateStreamsStream(int numStreams) {
 			return _streamsSource.Take(numStreams).ToList();
 		}
 
@@ -80,7 +83,7 @@ namespace EventStore.Core.Tests.XUnit.LogV3 {
 			var streamsStream = GenerateStreamsStream(numInStandardIndex);
 
 			// when
-			_sut.Init(streamsStream);
+			_sut.Init(streamsStream.ToDictionary(x => x.StreamId, x => x.StreamName));
 
 			// then
 			// now we have caught up we should be able to check that both indexes are equal
@@ -135,28 +138,39 @@ namespace EventStore.Core.Tests.XUnit.LogV3 {
 
 			//qq horrible numbers, probbly want a loop so we can test across pages
 			Assert.Equal(numStreams, scanned.Count);
-			Assert.Equal(1026, scanned[0].Item1);
-			Assert.Equal(1028, scanned[1].Item1);
-			Assert.Equal(1030, scanned[2].Item1);
-			Assert.Equal(1032, scanned[3].Item1);
-			Assert.Equal(1034, scanned[4].Item1);
+			Assert.Equal(1024, scanned[0].Item1);
+			Assert.Equal(1026, scanned[1].Item1);
+			Assert.Equal(1028, scanned[2].Item1);
+			Assert.Equal(1030, scanned[3].Item1);
+			Assert.Equal(1032, scanned[4].Item1);
 		}
 
 		//qq probably temp
 		[Fact]
 		public void can_scan_backwards() {
-			var numStreams = 1000;
+			var numStreams = 5000;
 			PopulateSut(numStreams);
 
 			var scanned = _sut.ScanBackwards().ToList();
+			scanned.Reverse();
 
 			Assert.Equal(numStreams, scanned.Count);
 
-			for (int i = numStreams - 1; i >= 0; i--) {
-				var expectedStreamId = 1024 + 2 * (numStreams - i);
-				Assert.Equal(expectedStreamId, scanned[i].Item1);
-				Assert.Equal($"stream{expectedStreamId}", scanned[i].Item2);
+			var expectedStreamId = LogV3SystemStreams.FirstRealStream;
+			for (int i = 0; i < numStreams; i++) {
+				Assert.Equal(expectedStreamId, scanned[i].StreamId);
+				Assert.Equal($"stream{expectedStreamId}", scanned[i].StreamName);
+				expectedStreamId += LogV3SystemStreams.StreamInterval;
 			}
+		}
+
+		[Fact]
+		public void can_scan_empty_range() {
+			var numStreams = 10000;
+			PopulateSut(numStreams);
+
+			var scanned = _sut.Scan(0, 0).ToList();
+			Assert.Empty(scanned);
 		}
 
 		[Fact]
@@ -171,11 +185,11 @@ namespace EventStore.Core.Tests.XUnit.LogV3 {
 
 			Assert.Equal(remainingStreams, scanned.Count);
 
-			for (int i = remainingStreams - 1; i >= 0; i--) {
-				//qqqq fix this
-				var expectedStreamId = 1024 + 2 * (remainingStreams - i);
-				Assert.Equal(expectedStreamId, scanned[i].Item1);
-				Assert.Equal($"stream{expectedStreamId}", scanned[i].Item2);
+			var expectedStreamId = LogV3SystemStreams.FirstRealStream;
+			for (int i = 0 ; i < remainingStreams; i++) {
+				Assert.Equal(expectedStreamId, scanned[i].StreamId);
+				Assert.Equal($"stream{expectedStreamId}", scanned[i].StreamName);
+				expectedStreamId += LogV3SystemStreams.StreamInterval;
 			}
 		}
 
@@ -188,51 +202,30 @@ namespace EventStore.Core.Tests.XUnit.LogV3 {
 			DeleteStreams(numStreams, deletedStreams);
 
 			var scanned = _sut.ScanBackwards().ToList();
+			scanned.Reverse();
 
 			Assert.Equal(remainingStreams, scanned.Count);
 
-			for (int i = remainingStreams - 1; i >= 0; i--) {
-				var expectedStreamId = 1024 + 2 * (remainingStreams - i);
-				Assert.Equal(expectedStreamId, scanned[i].Item1);
-				Assert.Equal($"stream{expectedStreamId}", scanned[i].Item2);
+			var expectedStreamId = LogV3SystemStreams.FirstRealStream;
+			for (int i = 0; i < remainingStreams; i++) {
+				Assert.Equal(expectedStreamId, scanned[i].StreamId);
+				Assert.Equal($"stream{expectedStreamId}", scanned[i].StreamName);
+				expectedStreamId += LogV3SystemStreams.StreamInterval;
 			}
 		}
 
 		[Fact]
 		public void on_init_can_catchup() {
-			// in a catchup scenario the standard index has more records than the stream name index.
-			// we need to add them.
-			//
-			//qq we need to find the last entry that is in the faster log.
-			// in faster it seems you can't scan backwards, so we are going to need to get a begin address
-			// from somewhere that we know to be before the end of the log.
-			//
-			// 1. have a chaser that follows along as records get committed and checkpoints them.
-			// 2. use entries from the standard index.
-			//
-			// lets go with option 2 because it involves less ongoing work as the system is running.
-			//
-			// so we need to get the address of a record that we just read. perhaps the advanced functions can help us with that?
-
-			//qq dont hardcode 514 here.
-
 			Test(
 				numInStreamNameIndex: 3,
 				numInStandardIndex: 5);
+		}
 
-
-			//qq idea: lets iterate through and see what is there.
-			// perhaps we can grab the last entry in the standard index to see if it is present.
-			// if not we proceed backwards through the index until we find one that is present, and then
-			// go forward from there putting them in.
-			//
-			// if the first one is present, then we need to delete everything after that point
-			// which means we need to scan forwards starting from the address of that last record.
-			//
-			// OR we could have a chaser that chases along whatever has been persisted to disk and
-			// writes the address in a mem mapped checkpoint.
-
-
+		[Fact]
+		public void on_init_can_catchup_from_0() {
+			Test(
+				numInStreamNameIndex: 0,
+				numInStandardIndex: 5);
 		}
 
 		//

@@ -3,17 +3,22 @@ using EventStore.Common.Utils;
 using FASTER.core;
 
 namespace EventStore.Core.LogV3.FASTER {
-	public class TryAddFunctions<TValue> : IFunctions<SpanByte, TValue, TValue, TValue, FASTERStreamNameIndex.Context<TValue>> {
-		readonly FASTERStreamNameIndex.Context<TValue> _context;
+	public class TryAddFunctions<TValue> : IFunctions<SpanByte, TValue, TValue, TValue, TryAddFunctions<TValue>.Context> {
+		public class Context {
+			public TValue Value { get; set; }
+			public Status Status { get; set; }
+		}
+
+		readonly Context _context;
 
 		//qq dont think we need locking, but check what this is exactly
 		public bool SupportsLocking => false;
 
-		public TryAddFunctions(FASTERStreamNameIndex.Context<TValue> context) : base() {
+		public TryAddFunctions(Context context) : base() {
 			_context = context;
 		}
 
-		public void RMWCompletionCallback(ref SpanByte key, ref TValue input, FASTERStreamNameIndex.Context<TValue> context, Status status) {
+		public void RMWCompletionCallback(ref SpanByte key, ref TValue input, Context context, Status status) {
 			context.Status = status;
 		}
 
@@ -50,13 +55,13 @@ namespace EventStore.Core.LogV3.FASTER {
 		public void CopyUpdater(ref SpanByte key, ref TValue input, ref TValue oldValue, ref TValue newValue) =>
 			throw new NotImplementedException();
 
-		public void ReadCompletionCallback(ref SpanByte key, ref TValue input, ref TValue output, FASTERStreamNameIndex.Context<TValue> ctx, Status status) =>
+		public void ReadCompletionCallback(ref SpanByte key, ref TValue input, ref TValue output, Context ctx, Status status) =>
 			throw new NotImplementedException();
 
-		public void UpsertCompletionCallback(ref SpanByte key, ref TValue value, FASTERStreamNameIndex.Context<TValue> ctx) =>
+		public void UpsertCompletionCallback(ref SpanByte key, ref TValue value, Context ctx) =>
 			throw new NotImplementedException();
 
-		public void DeleteCompletionCallback(ref SpanByte key, FASTERStreamNameIndex.Context<TValue> ctx) =>
+		public void DeleteCompletionCallback(ref SpanByte key, Context ctx) =>
 			throw new NotImplementedException();
 
 
